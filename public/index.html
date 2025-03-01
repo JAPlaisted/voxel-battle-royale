@@ -1,18 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Voxel Battle Royale</title>
-    <style>
-        body { margin: 0; overflow: hidden; }
-        canvas { display: block; }
-    </style>
+  <title>Voxel Battle Royale</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+    #hud {
+      position: absolute; top: 10px; left: 10px; color: #fff;
+      font-family: sans-serif; background: rgba(0,0,0,0.5); padding: 5px;
+    }
+    #inventory {
+      position: absolute; bottom: 10px; left: 10px;
+    }
+    #inventory img {
+      width: 50px;
+      margin-right: 10px;
+    }
+  </style>
 </head>
 <body>
-    <!-- Load Socket.io client -->
-    <script src="/socket.io/socket.io.js"></script>
-    <!-- Load Three.js from a CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Main game logic -->
-    <script src="main.js"></script>
+  <div id="hud">Loading...</div>
+  <div id="inventory">
+    <img src="assets/icons/pistol.png" alt="Pistol">
+    <img src="assets/icons/shotgun.png" alt="Shotgun">
+    <img src="assets/icons/rifle.png" alt="Rifle">
+    <img src="assets/icons/health_potion.png" alt="Health Potion">
+    <img src="assets/icons/revive_kit.png" alt="Revive Kit">
+  </div>
+  <!-- Load Socket.io client -->
+  <script src="/socket.io/socket.io.js"></script>
+  <!-- Load Three.js from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Load GLTFLoader from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js"></script>
+  <!-- Main game logic -->
+  <script src="main.js"></script>
+  <!-- Controls for input handling -->
+  <script src="controls.js"></script>
 </body>
 </html>

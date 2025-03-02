@@ -1,7 +1,17 @@
 // public/controls.js
 
 document.addEventListener("DOMContentLoaded", () => {
-    // ===== Create Movement Joystick (Left Side, controlled by WASD) =====
+    // --- Jump Input ---
+    document.addEventListener("keydown", (event) => {
+      if (event.code === "Space") {
+        if (!window.isJumping) {
+          window.isJumping = true;
+          window.jumpVelocity = window.jumpStrength;
+        }
+      }
+    });
+  
+    // --- Movement Joystick (Left Side, controlled by WASD) ---
     const movementJoystickContainer = document.createElement("div");
     movementJoystickContainer.id = "movementJoystickContainer";
     movementJoystickContainer.style.position = "absolute";
@@ -28,13 +38,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const joystickMaxDistance = movementJoystickContainer.clientWidth / 2;
     const moveSpeed = 0.2; // Movement step per update
   
-    // Use a keyState object to track WASD keys.
-    // When rotation = 0 (player faces +Z):
-    // "w" moves forward (+1), "s" moves backward (-1),
-    // "a" moves left (+1), "d" moves right (-1) [via our updated formula].
+    // Track WASD keys.
     const keyState = { w: 0, a: 0, s: 0, d: 0 };
   
-    // Update the UI of the movement joystick based on keyState.
     function updateMovementJoystickUI() {
       const uiVec = new THREE.Vector2(keyState.d - keyState.a, keyState.w - keyState.s);
       if (uiVec.length() > 0) uiVec.normalize();
@@ -44,18 +50,15 @@ document.addEventListener("DOMContentLoaded", () => {
       movementJoystick.style.top = `${50 + (offsetY / movementJoystickContainer.clientHeight) * 100}%`;
     }
   
-    // Update movement based on keyState and the player's current rotation.
     function updateMovement() {
       if (!window.playerMesh) return;
       const R = window.playerMesh.rotation.y;
-      // Define forward so that when R = 0, forward = (0, 0, 1)
+      // When R = 0, assume the player faces +Z.
       const forward = new THREE.Vector3(Math.sin(R), 0, Math.cos(R));
-      // Define right so that when R = 0, right = (1, 0, 0)
       const right = new THREE.Vector3(Math.cos(R), 0, -Math.sin(R));
-      // Build movement: forward*(w-s) + right*(a-d)
       let move = new THREE.Vector3(0, 0, 0);
       move.add(forward.multiplyScalar(keyState.w - keyState.s));
-      move.add(right.multiplyScalar(keyState.a - keyState.d)); // Swapped here!
+      move.add(right.multiplyScalar(keyState.a - keyState.d));
       if (move.length() > 0) {
         move.normalize().multiplyScalar(moveSpeed);
         window.playerMesh.position.add(move);
@@ -80,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   
-    // ===== Create Rotation Joystick (Right Side, controlled by mouse) =====
+    // --- Rotation Joystick (Right Side, controlled by mouse) ---
     const rotationJoystickContainer = document.createElement("div");
     rotationJoystickContainer.id = "rotationJoystickContainer";
     rotationJoystickContainer.style.position = "absolute";
@@ -90,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
     rotationJoystickContainer.style.height = "100px";
     rotationJoystickContainer.style.background = "rgba(0, 0, 0, 0.3)";
     rotationJoystickContainer.style.borderRadius = "50%";
-    rotationJoystickContainer.style.touchAction = "none"; // Prevent default touch events.
+    rotationJoystickContainer.style.touchAction = "none";
     document.body.appendChild(rotationJoystickContainer);
   
     const rotationJoystick = document.createElement("div");
@@ -129,8 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
       // Compute the angle from center (in radians).
       const theta = Math.atan2(offsetY, offsetX);
-      // Map joystick input so that when pushed upward (theta ≈ -π/2) the player's rotation becomes 0.
-      // That is: player rotation = theta + π/2.
+      // Set player's rotation: pushing upward (theta ≈ -π/2) yields rotation 0.
       if (window.playerMesh) {
         window.playerMesh.rotation.y = theta + Math.PI / 2;
       }

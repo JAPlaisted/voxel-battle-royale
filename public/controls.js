@@ -5,6 +5,15 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("keydown", (event) => {
       if (event.code === "Space") {
         if (!window.isJumping) {
+          // Capture horizontal momentum based on player's current forward direction.
+          if (window.playerMesh) {
+            const forward = new THREE.Vector3(0, 0, 1); // Default forward (+Z)
+            forward.applyEuler(window.playerMesh.rotation);
+            // Set jump horizontal velocity; adjust factor (0.1 here) for less forward jump.
+            window.jumpHorizontalVelocity = forward.multiplyScalar(0.1);
+          } else {
+            window.jumpHorizontalVelocity = new THREE.Vector3(0, 0, 0);
+          }
           window.isJumping = true;
           window.jumpVelocity = window.jumpStrength;
         }
@@ -63,6 +72,9 @@ document.addEventListener("DOMContentLoaded", () => {
         move.normalize().multiplyScalar(moveSpeed);
         window.playerMesh.position.add(move);
         window.updateSelfPosition(window.playerMesh.position);
+        window.isMoving = true;
+      } else {
+        window.isMoving = false;
       }
     }
   
@@ -80,8 +92,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (["w", "a", "s", "d"].includes(key)) {
         keyState[key] = 0;
         updateMovementJoystickUI();
+        updateMovement();
       }
     });
+  
+    // Expose updateMovement so main.js can call it continuously.
+    window.updateMovement = updateMovement;
   
     // --- Rotation Joystick (Right Side, controlled by mouse) ---
     const rotationJoystickContainer = document.createElement("div");
@@ -132,7 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
       // Compute the angle from center (in radians).
       const theta = Math.atan2(offsetY, offsetX);
-      // Set player's rotation: pushing upward (theta ≈ -π/2) yields rotation 0.
+      // Set player's rotation so that pushing upward (theta ≈ -π/2) yields rotation 0.
       if (window.playerMesh) {
         window.playerMesh.rotation.y = theta + Math.PI / 2;
       }

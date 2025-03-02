@@ -11,19 +11,21 @@ let isJumping = false;
 let jumpVelocity = 0;
 const gravity = -0.03;
 const jumpStrength = 0.7;
-const baseY = 1.5; // Increase this value so the character sits higher (legs are fully visible)
+const baseY = 1.5; // Height at which the character sits
+let jumpHorizontalVelocity = new THREE.Vector3(0, 0, 0);
 
-// Expose jump globals for controls.js
+// Expose globals for controls.js
 window.isJumping = isJumping;
 window.jumpVelocity = jumpVelocity;
 window.gravity = gravity;
 window.jumpStrength = jumpStrength;
 window.baseY = baseY;
+window.jumpHorizontalVelocity = jumpHorizontalVelocity;
 
 // Build a blocky character from code.
 function createCharacter() {
   const character = new THREE.Group();
-  // Raise the entire character by baseY so the legs (at y = -0.65) are fully visible.
+  // Raise the entire character by baseY so that the legs (at y = -0.65) are fully visible.
   character.position.y = baseY;
 
   // Body (green)
@@ -68,6 +70,10 @@ function createCharacter() {
   rightLeg.position.set(0.25, -0.65, 0);
   character.add(rightLeg);
 
+  // Save references to legs for animation.
+  character.userData.leftLeg = leftLeg;
+  character.userData.rightLeg = rightLeg;
+
   return character;
 }
 
@@ -75,7 +81,7 @@ function createCharacter() {
 function createFallbackPlayer(selfPlayer) {
   console.log("Creating blocky character from code...");
   playerMesh = createCharacter();
-  // Set the character's world position so that its base is at y = selfPlayer.position.y + baseY.
+  // Set the character's world position so its base is at selfPlayer.position.y + baseY.
   playerMesh.position.set(
     selfPlayer.position.x,
     selfPlayer.position.y + baseY,
@@ -138,7 +144,7 @@ function init(selfPlayer) {
   // Create our blocky character.
   createFallbackPlayer(selfPlayer);
 
-  // Update HUD (assumes an element with id "hud" exists).
+  // Update HUD.
   const hud = document.getElementById("hud");
   if (hud) {
     hud.innerText = `You are ${selfPlayer.state}. Health: ${selfPlayer.health}`;
@@ -150,16 +156,36 @@ function init(selfPlayer) {
 function animate() {
   requestAnimationFrame(animate);
 
+  // Call continuous movement update (if keys are held down).
+  if (window.updateMovement) {
+    window.updateMovement();
+  }
+
   if (playerMesh && playerMesh.position) {
-    // Jump physics: if the player is jumping, update vertical position.
+    // Jump physics.
     if (window.isJumping) {
       playerMesh.position.y += window.jumpVelocity;
       window.jumpVelocity += window.gravity;
+      // Apply horizontal jump momentum.
+      playerMesh.position.x += window.jumpHorizontalVelocity.x;
+      playerMesh.position.z += window.jumpHorizontalVelocity.z;
       if (playerMesh.position.y <= window.baseY) {
         playerMesh.position.y = window.baseY;
         window.isJumping = false;
         window.jumpVelocity = 0;
+        window.jumpHorizontalVelocity.set(0, 0, 0);
       }
+    }
+
+    // Animate legs if moving.
+    if (window.isMoving && playerMesh.userData.leftLeg && playerMesh.userData.rightLeg) {
+      const t = performance.now() * 0.005;
+      const swingAngle = Math.sin(t) * 0.2; // Adjust amplitude (0.2 here)
+      playerMesh.userData.leftLeg.rotation.x = swingAngle;
+      playerMesh.userData.rightLeg.rotation.x = -swingAngle;
+    } else {
+      if (playerMesh.userData.leftLeg) playerMesh.userData.leftLeg.rotation.x = 0;
+      if (playerMesh.userData.rightLeg) playerMesh.userData.rightLeg.rotation.x = 0;
     }
 
     // Compute the player's forward vector.
